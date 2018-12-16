@@ -90,9 +90,9 @@ public abstract class BaseActivity extends AppCompatActivity {
 //        IntentFilter intentFilter = new IntentFilter(GPSService.ACTION_LOCATION_UPDATE);
 //        registerReceiver(receiverGPS, intentFilter);
 
-        Intent mIntent = new Intent(this, SocketClient.class);
-        startService(mIntent);
-        bindService(mIntent, this.mConnection, BIND_AUTO_CREATE);
+//        Intent mIntent = new Intent(this, SocketClient.class);
+//        startService(mIntent);
+//        bindService(mIntent, this.mConnection, BIND_AUTO_CREATE);
     }
 
 
@@ -115,10 +115,10 @@ public abstract class BaseActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (this.mBounded) {
-            unbindService(this.mConnection);
-            this.mBounded = false;
-        }
+//        if (this.mBounded) {
+//            unbindService(this.mConnection);
+//            this.mBounded = false;
+//        }
     }
 
 

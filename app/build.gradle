@@ -36,4 +36,6 @@ dependencies {
     implementation "com.tonyodev.fetch2rx:fetch2rx:2.2.0-RC6"
     //    Utils
     implementation 'com.blankj:utilcode:1.5.1'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:8.6.0'
+    implementation 'com.jakewharton:butterknife:8.6.0'
 }
