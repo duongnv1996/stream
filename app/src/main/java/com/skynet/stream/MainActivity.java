@@ -35,6 +35,10 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+import static android.media.AudioFormat.CHANNEL_CONFIGURATION_MONO;
+import static android.media.AudioFormat.CHANNEL_OUT_MONO;
+import static android.media.AudioFormat.CHANNEL_OUT_STEREO;
+
 public class MainActivity extends BaseActivity {
     AudioTrack mTracker;
     @BindView(R.id.edtHost)
@@ -67,9 +71,9 @@ public class MainActivity extends BaseActivity {
 //            requestPermission();
 //        else
 //            getUpdate();
-        int bufferSize = AudioTrack.getMinBufferSize(8000, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
+        int bufferSize = AudioTrack.getMinBufferSize( 8000, CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
         mTracker = new AudioTrack(AudioManager.STREAM_MUSIC, 8000
-                , AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT, bufferSize, AudioTrack.MODE_STREAM);
+                , CHANNEL_OUT_MONO,AudioFormat.ENCODING_PCM_16BIT, bufferSize, AudioTrack.MODE_STREAM);
     }
 
     @Override
