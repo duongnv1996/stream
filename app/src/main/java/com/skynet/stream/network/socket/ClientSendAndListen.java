@@ -7,7 +7,9 @@ import android.util.Log;
 
 import com.blankj.utilcode.util.LogUtils;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
@@ -16,24 +18,34 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 
+import javazoom.jl.decoder.Bitstream;
+import javazoom.jl.decoder.BitstreamException;
+import javazoom.jl.decoder.Decoder;
+import javazoom.jl.decoder.DecoderException;
+import javazoom.jl.decoder.Header;
+import javazoom.jl.decoder.SampleBuffer;
+
 public class ClientSendAndListen implements Runnable {
     int portVal = 5555;
     String ipVal = "192.168.0.130";
     AudioTrack mAudioTrack;
     ByteBuffer _intShifter;
-
+   Decoder mDecoder;
     public ClientSendAndListen(AudioTrack mAudio, String host, int port) {
         this.mAudioTrack = mAudio;
         this.portVal = port;
         this.ipVal = host;
         _intShifter = ByteBuffer.allocate(Integer.SIZE / Byte.SIZE)
                 .order(ByteOrder.LITTLE_ENDIAN);
+        mDecoder = new Decoder();
+
     }
 
     @Override
@@ -48,6 +60,8 @@ public class ClientSendAndListen implements Runnable {
             udpSocket.send(packetSend);
             while (run) {
                 try {
+
+
                     byte[] message = new byte[50000];
                     DatagramPacket packet = new DatagramPacket(message, message.length);
 
@@ -62,12 +76,51 @@ public class ClientSendAndListen implements Runnable {
 
                     int length = byteToInt(lengthData);
                     LogUtils.e("length = " + length + " - " + lengthData[0] + " - " + lengthData[1] + " - " + lengthData[2] + " - " + lengthData[3]);
-                    //   byte audioData[] = Arrays.copyOfRange(message, 4, length + 4);
+                       byte audioData[] = Arrays.copyOfRange(message, 5, length + 4);
                     // Get an input stream on the byte array
                     // containing the data
-                    mAudioTrack.write(message, 5,length);
-                    mAudioTrack.play();
+                    InputStream inputStream = new ByteArrayInputStream(audioData);
+                    Bitstream bitstream = new Bitstream(inputStream);
+//                    Header frameHeader = bitstream.readFrame();
+//                    SampleBuffer sampleBuffer = (SampleBuffer) mDecoder.decodeFrame(frameHeader, bitstream);
+//                    short[] buffer = sampleBuffer.getBuffer();
+//                    mAudioTrack.write(buffer, 0, buffer.length);
+//                    final int READ_THRESHOLD = 2147483647;
+//                    int framesReaded = READ_THRESHOLD;
+//                    Header header;
+//                    for(; framesReaded-- > 0 && (header = bitstream.readFrame()) != null;) {
+//                        SampleBuffer sampleBuffer = (SampleBuffer) mDecoder.decodeFrame(header, bitstream);
+//                        short[] buffer = sampleBuffer.getBuffer();
+//                        mAudioTrack.write(buffer, 0, buffer.length);
+//                        bitstream.closeFrame();
+//                    }
+
+
+//                    mAudioTrack.write(message, 5,length);
+//                    mAudioTrack.play();
 //                    playSound(message,length);
+
+
+                    try {
+//                        InputStream in = new URL("http://icecast.omroep.nl:80/radio1-sb-mp3")
+//                                .openConnection()
+//                                .getInputStream();
+//                        Bitstream bitstream = new Bitstream(in);
+
+                        final int READ_THRESHOLD = 2147483647;
+                        int framesReaded = READ_THRESHOLD;
+
+                        Header header;
+                        for(; framesReaded-- > 0 && (header = bitstream.readFrame()) != null;) {
+                            SampleBuffer sampleBuffer = (SampleBuffer) mDecoder.decodeFrame(header, bitstream);
+                            short[] buffer = sampleBuffer.getBuffer();
+                            mAudioTrack.write(buffer, 0, buffer.length);
+                            bitstream.closeFrame();
+                        }
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 } catch (IOException e) {
                     LogUtils.e(" UDP client has IOException", "error: ", e);
                     run = false;

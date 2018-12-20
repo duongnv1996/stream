@@ -26,10 +26,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URL;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import javazoom.jl.decoder.Bitstream;
+import javazoom.jl.decoder.Decoder;
+import javazoom.jl.decoder.Header;
+import javazoom.jl.decoder.SampleBuffer;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -71,9 +76,49 @@ public class MainActivity extends BaseActivity {
 //            requestPermission();
 //        else
 //            getUpdate();
-        int bufferSize = AudioTrack.getMinBufferSize( 8000, CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
-        mTracker = new AudioTrack(AudioManager.STREAM_MUSIC, 8000
-                , CHANNEL_OUT_MONO,AudioFormat.ENCODING_PCM_16BIT, bufferSize, AudioTrack.MODE_STREAM);
+//        int bufferSize = AudioTrack.getMinBufferSize( 44100, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
+//        mTracker = new AudioTrack(AudioManager.STREAM_MUSIC, 44100
+//                , AudioFormat.CHANNEL_OUT_MONO,AudioFormat.ENCODING_PCM_16BIT, bufferSize, AudioTrack.MODE_STREAM);
+        final int sampleRate = 44100;
+
+        final int minBufferSize = AudioTrack.getMinBufferSize(sampleRate,
+                AudioFormat.CHANNEL_OUT_STEREO,
+                AudioFormat.ENCODING_PCM_16BIT);
+
+        mTracker = new AudioTrack(AudioManager.STREAM_MUSIC,
+                sampleRate,
+                AudioFormat.CHANNEL_OUT_STEREO,
+                AudioFormat.ENCODING_PCM_16BIT,
+                minBufferSize,
+                AudioTrack.MODE_STREAM);
+        final Decoder mDecoder = new Decoder();
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    InputStream in = new URL("http://icecast.omroep.nl:80/radio1-sb-mp3")
+                            .openConnection()
+                            .getInputStream();
+                    Bitstream bitstream = new Bitstream(in);
+
+                    final int READ_THRESHOLD = 2147483647;
+                    int framesReaded = READ_THRESHOLD;
+
+                    Header header;
+                    for(; framesReaded-- > 0 && (header = bitstream.readFrame()) != null;) {
+                        SampleBuffer sampleBuffer = (SampleBuffer) mDecoder.decodeFrame(header, bitstream);
+                        short[] buffer = sampleBuffer.getBuffer();
+                        mTracker.write(buffer, 0, buffer.length);
+                        bitstream.closeFrame();
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+      //  thread.start();
+        mTracker.play();
     }
 
     @Override
